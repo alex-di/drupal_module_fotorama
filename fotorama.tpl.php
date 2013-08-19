@@ -48,9 +48,7 @@
         <div class="field-label"<?php print $title_attributes; ?>><?php print $label ?>:&nbsp;</div>
     <?php endif; ?>
     <div class="field-items fotorama"<?php print $content_attributes; ?> data-nav="thumbs" data-width="100%" data-cropToFit="true">
-        <?php foreach ($items as $delta => $item):
-            var_dump('some');
-            ?>
+        <?php foreach ($items as $delta => $item): ?>
             <?php print render($item); ?>
         <?php endforeach; ?>
     </div>
