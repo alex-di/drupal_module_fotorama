@@ -1,0 +1,6 @@
+name = "Fotorama"
+description = Provides <a href="http://fotorama.io/">fotorama</a> javascript library to wrap images with it
+core = 7.x
+dependencies[] = field
+dependencies[] = image
+files[] = fotorama.module

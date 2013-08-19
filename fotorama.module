@@ -1,0 +1,119 @@
+<?php
+
+/**
+ * @file
+ * Add an URL formatter for image field
+ */
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function fotorama_field_formatter_info() {
+    return array(
+        'fotorama' => array(
+            'label' => t('Fotorama'),
+            'field types' => array('image'),
+            'settings' => array('fotorama_image_style' => '', 'fotorama_thumb_style' => ''),
+        ),
+    );
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function fotorama_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+    $display = $instance['display'][$view_mode];
+    $settings = $display['settings'];
+
+    $image_styles = image_style_options(FALSE);
+    $image_styles_hide = $image_styles;
+    $image_styles_hide['hide'] = t('Hide (do not display image)');
+    $element['fotorama_image_style'] = array(
+        '#title' => t('Fotorama image style'),
+        '#type' => 'select',
+        '#default_value' => $settings['fotorama_image_style'],
+        '#empty_option' => t('None (original image)'),
+        '#options' => $image_styles,
+        '#description' => t('Image style to use in the Fotorama.'),
+    );
+    $element['fotorama_thumb_style'] = array(
+        '#title' => t('Fotorama thumbnail style'),
+        '#type' => 'select',
+        '#default_value' => $settings['fotorama_thumb_style'],
+        '#empty_option' => t('None (original image)'),
+        '#options' => $image_styles,
+        '#description' => t('Image style to use in the Fotorama.'),
+    );
+    return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function fotorama_field_formatter_settings_summary($field, $instance, $view_mode) {
+    $display = $instance['display'][$view_mode];
+    $settings = $display['settings'];
+    $summary = t('Use a Fotorama gallery with @style and @style2 image styles', array(
+        '@style' => $settings['fotorama_image_style'],
+        '@style2' => $settings['fotorama_thumb_style'],
+    )); // we use t() for translation and placeholders to guard against attacks
+    return $summary;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function fotorama_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+    $element = array();
+    drupal_add_css('http://fotorama.s3.amazonaws.com/4.1.16/fotorama.css', 'external');
+    drupal_add_js(drupal_get_path('module','fotorama').'/inc/fotorama.js');
+    foreach ($items as $delta => $item) {
+        $element[$delta] = array(
+            '#theme' => 'fotorama',
+            '#item' => $item,
+            '#image_style' => $display['settings']['fotorama_image_style'],
+            '#thumb_style' => $display['settings']['fotorama_thumb_style'],
+        );
+    }
+    return $element;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function fotorama_theme() {
+    return array(
+        'fotorama' => array(
+            //'template' => 'fotorama',
+            'variables' => array(
+                'item' => NULL,
+                'image_style' => '',
+                'thumb_style' => '',
+            ),
+        ),
+        'fotorama_field' => array(
+            'template' => 'fotorama',
+            'variables' => array(
+                'items' => null,
+            ),
+        ),
+    );
+}
+
+function fotorama_preprocess_field(&$variables) {
+    if ($variables['element']['#field_type'] == 'image' && $variables['element']['#formatter'] == 'fotorama') {
+        $variables['theme_hook_suggestions'] = array('fotorama_field');
+    }
+}
+
+function theme_fotorama($variables) {
+    $item = $variables['item'];
+    $img_style = $variables['image_style'];
+    $thmb_style = $variables['thumb_style'];
+    $path = (!empty($img_style)) ? image_style_url($img_style, $item['uri']) : file_create_url($item['uri']);
+    $options = array();
+    $options['html'] = TRUE;
+    if(!empty($item['title'])) $options['attributes']['data-caption'] = $item['title'];
+    $output = l(theme_image_formatter(array('item' => $item, 'image_style' => $thmb_style)), $path, $options);
+    return $output;
+}
